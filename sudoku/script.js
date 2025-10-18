@@ -707,7 +707,7 @@ function launchConfetti(durationMs = 1600, particleCount = 180){
 
 // --- SFX & message pop helpers ---
 const winTone = (()=>{
-  // Simple WebAudio triad for win
+  // Ta‑da: two ascending major chords + a short high ping
   let ctx; let playing = false;
   return ()=>{
     if(!sfxEnabled) return;
@@ -715,19 +715,48 @@ const winTone = (()=>{
     playing = true;
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
-    const freqs = [523.25, 659.25, 783.99]; // C5 E5 G5
-    freqs.forEach((f, i)=>{
+    const chord1 = [392.00, 493.88, 587.33];   // G4 B4 D5
+    const chord2 = [523.25, 659.25, 783.99];   // C5 E5 G5
+    const ping   = 1046.50;                    // C6
+
+    function playChord(freqs, tStart, dur=0.28, detuneCents=4){
+      freqs.forEach((f, i)=>{
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = f;
+        // small detune spread for richness
+        o.detune.value = (i-1) * detuneCents;
+        g.gain.setValueAtTime(0.0001, tStart);
+        g.gain.exponentialRampToValueAtTime(0.2, tStart + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, tStart + dur);
+        o.connect(g).connect(ctx.destination);
+        o.start(tStart + i*0.005);
+        o.stop(tStart + dur + 0.05 + i*0.005);
+      });
+    }
+
+    function playPing(tStart){
       const o = ctx.createOscillator();
       const g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(0.14, now + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35 + i*0.03);
+      o.type = 'sine';
+      o.frequency.setValueAtTime(ping, tStart);
+      g.gain.setValueAtTime(0.0001, tStart);
+      g.gain.exponentialRampToValueAtTime(0.22, tStart + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, tStart + 0.18);
       o.connect(g).connect(ctx.destination);
-      o.start(now + i*0.01);
-      o.stop(now + 0.5 + i*0.03);
-    });
-    setTimeout(()=> playing=false, 600);
+      o.start(tStart);
+      o.stop(tStart + 0.22);
+    }
+
+    const t1 = now;
+    const t2 = t1 + 0.24;  // stagger second chord slightly later
+    const t3 = t2 + 0.26;  // ping after chords
+    playChord(chord1, t1);
+    playChord(chord2, t2);
+    playPing(t3);
+
+    setTimeout(()=> playing=false, 700);
   };
 })();
 
