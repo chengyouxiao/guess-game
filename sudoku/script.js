@@ -30,6 +30,7 @@ let sfxEnabled = true;
 let prefSameNumber = false;
 let prefRowColBox = true;
 let prefSmartNotes = false;
+let solved = false;
 
 // Optional curated bank retained as fallback if generation fails quickly
 const curatedBank = {
@@ -308,16 +309,12 @@ function onCheck(){
     if(anyWrong){ message.textContent = 'Some numbers don\'t match the solution.'; return; }
   }
   if(!isComplete()){ message.textContent = 'Looks good so far. Not complete yet.'; return; }
-  pulseMessage('Great job! Puzzle solved!');
-  stopTimer(true);
-  updateBestTime();
-  clearSavedState();
-  winTone();
-  launchConfetti();
+  celebrateSolved();
 }
 
 function onNewGame(){
   const diff = difficultySel.value || 'medium';
+  solved = false;
   createBoard();
   loadPuzzle(diff);
   startTimer(true);
@@ -405,6 +402,7 @@ function restoreState(){
   try{
     const st = JSON.parse(raw);
     if(!st || !st.puzzle || !st.solution) return false;
+    solved = false;
     difficultySel.value = st.diff || 'medium';
     currentSolution = st.solution;
     createBoard();
@@ -481,6 +479,7 @@ function pruneNotesAround(idx, digit){
 
 // --- Keypad and input handling ---
 function handleInput(i, key){
+  if(solved) return;
   if(given.has(i)) return;
   if(notesMode){
     if(key==='0') { notes[i].clear(); renderNotes(i); saveState(); return; }
@@ -506,6 +505,9 @@ function handleInput(i, key){
   if(autoCheck) checkConflicts();
   saveState();
   if(selectedIndex>=0) applySameNumberHighlight(selectedIndex);
+  if(!solved && currentSolution && isBoardEqualToSolution()){
+    celebrateSolved();
+  }
 }
 
 function renderNotes(i){
@@ -607,6 +609,9 @@ hintBtn.addEventListener('click', ()=>{
     if(autoCheck) checkConflicts();
     pulseMessage('Hint used.');
     saveState();
+    if(!solved && currentSolution && isBoardEqualToSolution()){
+      celebrateSolved();
+    }
   }
 });
 
@@ -617,6 +622,25 @@ function readBoardToArr(){
     arr[i] = t && /^[1-9]$/.test(t) ? t : '.';
   }
   return arr;
+}
+
+function isBoardEqualToSolution(){
+  if(!currentSolution || currentSolution.length !== 81) return false;
+  for(let i=0;i<81;i++){
+    if(cells[i].textContent !== currentSolution[i]) return false;
+  }
+  return true;
+}
+
+function celebrateSolved(){
+  if(solved) return;
+  solved = true;
+  pulseMessage('Great job! Puzzle solved!');
+  stopTimer(true);
+  updateBestTime();
+  clearSavedState();
+  winTone();
+  launchConfetti();
 }
 
 // --- Celebration: Lightweight confetti ---
