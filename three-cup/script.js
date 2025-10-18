@@ -200,7 +200,6 @@ async function revealByElement(guessedCup){
     setMessage(`Miss! The ball was under Cup ${actualIdx+1}.`, 'lose');
     actualCup.classList.add('correct');
     missTone();
-    launchConfetti(900, 80);
   }
 
   running = false;
