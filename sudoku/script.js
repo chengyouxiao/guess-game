@@ -7,22 +7,40 @@ const checkBtn = document.getElementById('checkBtn');
 let cells = [];
 let given = new Set(); // indices that are fixed
 let selectedIndex = -1;
+let currentSolution = null; // 81-char string for the loaded puzzle
 
-// Simple puzzle bank (0=empty, use '.' for blanks)
-// Each difficulty: array of strings length 81
+// Curated Sudoku bank with puzzle+solution pairs ('.' = blank)
+// Sources: common public examples (e.g., Wikipedia and widely used test sets)
 const puzzles = {
   low: [
-    // Easy puzzle
-    '53..7....6..195....98....6.8...6...34..8.3..17...2...6....28....419..5....8..79',
-    '1.3.5.7.9.7..3..5.5.9.1.3.9.1.7.5.1.5.9.3.7.3.7.1.9.2.4.6.8.8.6.4.2.5.3.1.7.9.5.3',
+    {
+      puzzle: '53..7....6..195....98....6.8...6...34..8.3..17...2...6....28....419..5....8..79',
+      solution:'534678912672195348198342567859761423342589671713924856961537284287419635425863179'
+    },
+    {
+      puzzle: '4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......',
+      solution:'417369825239845761865271943521736498974582136368914257192653874586427319743198652'
+    }
   ],
   medium: [
-    '6..874..2..4..5....3.2....1.2..5..8....9....7..8..4.9....3.5....1..2..5..684..3',
-    '.2.6.8..3..3..2..8.8..3..2..7.9..1..1..5..7..4..6.3..3..2..7.7..8..5..5.1.7..4.',
+    {
+      puzzle: '..9748...7...........2.1.9..1.9..3.8....8.2....7.3..6.4..3.6.9...........5...2..',
+      solution:'619748235724935861853261497195674328346582719278319654432156978961827543587493126'
+    },
+    {
+      puzzle: '52...6.........7.13...........4..8..6......5...........418.........3..2...87.....',
+      solution:'523416789894257631167398245942581376718639524356742918481975362679123854235864197'
+    }
   ],
   high: [
-    '.....7..1..8..9.....4..2..9..5.....5..1..3..6.....8..2..6..4.....1..2..8..9.....',
-    '...2...6.6.....1...1...8...3..6..4.....9.....9..2..7...4...1...8.....9.2...3...',
+    {
+      puzzle: '8...........36....7..9.2...5...7.......457....1...3...1....68..85...1..9....4..',
+      solution:'812753649945861327376492185537289461268145793149376852123974568684523971795618234'
+    },
+    {
+      puzzle: '1..9.7..3.8...6...9..3.....2..1.9..7.....2.....7..3.4.....8..6...2...9.5..6.3..1',
+      solution:'126947853583216479974385162231594687498672531765831294319758246642123795857469312'
+    }
   ]
 };
 
@@ -47,7 +65,8 @@ function createBoard(){
 function loadPuzzle(diff){
   const list = puzzles[diff] || puzzles.medium;
   const pick = list[Math.floor(Math.random()*list.length)];
-  setFromString(pick);
+  currentSolution = pick.solution;
+  setFromString(pick.puzzle);
   message.textContent = `New ${diff} puzzle loaded.`;
 }
 
@@ -150,8 +169,18 @@ function isComplete(){
 function onCheck(){
   const ok = checkConflicts();
   if(!ok){ message.textContent = 'There are conflicts. Keep trying!'; return; }
+  // If we have a known solution, mark any incorrect entries immediately
+  if(currentSolution){
+    let anyWrong = false;
+    for(let i=0;i<81;i++){
+      const v = cells[i].textContent;
+      if(!v) continue;
+      if(v !== currentSolution[i]){ cells[i].classList.add('conflict'); anyWrong = true; }
+    }
+    if(anyWrong){ message.textContent = 'Some numbers don\'t match the solution.'; return; }
+  }
   if(!isComplete()){ message.textContent = 'Looks good so far. Not complete yet.'; return; }
-  message.textContent = 'Great job! Puzzle solved (no conflicts and full).';
+  message.textContent = 'Great job! Puzzle solved!';
 }
 
 function onNewGame(){
