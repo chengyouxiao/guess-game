@@ -465,9 +465,23 @@ if(pauseBtn){
   pauseBtn.addEventListener('click', ()=> setPaused(!paused));
 }
 
-// Auto-resume on any UI movement/keypress
-['mousemove','mousedown','touchstart','pointerdown','wheel','keydown'].forEach(evt=>{
-  document.addEventListener(evt, ()=>{ if(paused) setPaused(false); }, { passive: true });
+// Auto-resume only on meaningful input
+// 1) Clicking a cell or any control button resumes
+document.addEventListener('click', (e)=>{
+  if(!paused) return;
+  const el = e.target;
+  const isCell = el.classList && el.classList.contains('cell');
+  const isButton = el.tagName === 'BUTTON' || el.closest('button');
+  if(isCell || isButton){ setPaused(false); }
+}, { passive: true });
+
+// 2) Number key input resumes when a cell is selected
+document.addEventListener('keydown', (e)=>{
+  if(!paused) return;
+  if(selectedIndex < 0) return;
+  if(/^[1-9]$/.test(e.key) || e.key === '0' || e.key === 'Backspace' || e.key === 'Delete'){
+    setPaused(false);
+  }
 });
 
 // Settings drawer behavior
