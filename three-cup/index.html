@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Three-Cup Shell Game</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Three-Cup Shell Game</h1>
+      <nav class="back"><a href="../index.html">← All Games</a></nav>
+      <div class="controls">
+        <button id="startBtn" class="primary">Start</button>
+        <button id="againBtn" class="secondary" hidden>Play Again</button>
+        <label class="speed">
+          Difficulty
+          <input id="difficulty" type="range" min="1" max="5" step="1" value="3" />
+        </label>
+      </div>
+      <div class="scoreboard">
+        <span id="wins">Wins: 0</span>
+        <span id="losses">Losses: 0</span>
+      </div>
+    </header>
+
+    <main>
+      <div id="table" class="table">
+        <!-- Ball -->
+        <div id="ball" class="ball" aria-hidden="true"></div>
+
+        <!-- Cups -->
+        <div id="cup0" class="cup" role="button" aria-label="Cup 1" tabindex="0">
+          <div class="cup-top"></div>
+          <div class="cup-body"></div>
+        </div>
+        <div id="cup1" class="cup" role="button" aria-label="Cup 2" tabindex="0">
+          <div class="cup-top"></div>
+          <div class="cup-body"></div>
+        </div>
+        <div id="cup2" class="cup" role="button" aria-label="Cup 3" tabindex="0">
+          <div class="cup-top"></div>
+          <div class="cup-body"></div>
+        </div>
+      </div>
+
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+    </main>
+
+    <footer class="app-footer">
+      <small>Tip: Watch closely as the cups shuffle faster!</small>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

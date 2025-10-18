@@ -1,0 +1,56 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #0f172a;
+  --panel: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(1200px 600px at 50% -300px, #111 0%, var(--bg) 60%);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.app-header, .app-footer {
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+  border-bottom: 1px solid #ffffff18;
+}
+.app-footer { border-top: 1px solid #ffffff18; border-bottom: none; text-align: center; }
+
+h1 { margin: 0 0 8px; font-weight: 700; letter-spacing: 0.5px; }
+
+main { display: grid; place-items: center; padding: 16px; }
+
+.board {
+  width: min(520px, 92vw);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  grid-template-rows: repeat(9, 1fr);
+  gap: 2px;
+  background: #0b1220;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset, 0 8px 24px rgba(0,0,0,0.45);
+}
+
+.cell {
+  background: #1f2937;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: background 160ms ease, outline 160ms ease;
+}
+.cell:hover { background: #243042; }
+.cell.active { outline: 2px solid var(--accent); color: #c7d2fe; }

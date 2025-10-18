@@ -1,3 +1,4 @@
+// Copied from root script.js to keep this game self-contained
 /*
 Three-Cup Shell Game
 - Place ball under a random cup
