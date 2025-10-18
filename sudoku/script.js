@@ -469,6 +469,8 @@ if(pauseBtn){
 // 1) Clicking a cell or any control button resumes
 document.addEventListener('click', (e)=>{
   if(!paused) return;
+  // Don't immediately resume due to the same click that just paused
+  if(e.target && e.target.closest && e.target.closest('#pauseBtn')) return;
   const el = e.target;
   const isCell = el.classList && el.classList.contains('cell');
   const isButton = el.tagName === 'BUTTON' || el.closest('button');
