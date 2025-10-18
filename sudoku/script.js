@@ -9,6 +9,7 @@ const autoCheckEl = document.getElementById('autoCheck');
 const hintBtn = document.getElementById('hintBtn');
 const timerEl = document.getElementById('timer');
 const sfxToggleBtn = document.getElementById('sfxToggle');
+const pauseBtn = document.getElementById('pauseBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsDrawer = document.getElementById('settingsDrawer');
 const closeSettingsBtn = document.getElementById('closeSettings');
@@ -31,6 +32,7 @@ let prefSameNumber = false;
 let prefRowColBox = true;
 let prefSmartNotes = false;
 let solved = false;
+let paused = false;
 
 // Optional curated bank retained as fallback if generation fails quickly
 const curatedBank = {
@@ -315,6 +317,7 @@ function onCheck(){
 function onNewGame(){
   const diff = difficultySel.value || 'medium';
   solved = false;
+  paused = false;
   createBoard();
   loadPuzzle(diff);
   startTimer(true);
@@ -402,7 +405,8 @@ function restoreState(){
   try{
     const st = JSON.parse(raw);
     if(!st || !st.puzzle || !st.solution) return false;
-    solved = false;
+  solved = false;
+  paused = false;
     difficultySel.value = st.diff || 'medium';
     currentSolution = st.solution;
     createBoard();
@@ -440,6 +444,31 @@ function getCurrentPuzzleString(){
   }
   return s;
 }
+
+// --- Pause/Resume ---
+function setPaused(state){
+  if(solved) return;
+  if(state && !paused){
+    paused = true;
+    stopTimer(true); // accumulate elapsed up to now
+    if(pauseBtn){ pauseBtn.textContent = '▶️ Resume'; }
+    pulseMessage('Paused. Move to resume.');
+  } else if(!state && paused){
+    paused = false;
+    startTimer(false); // continue counting
+    if(pauseBtn){ pauseBtn.textContent = '⏸️ Pause'; }
+    pulseMessage('Resumed.');
+  }
+}
+
+if(pauseBtn){
+  pauseBtn.addEventListener('click', ()=> setPaused(!paused));
+}
+
+// Auto-resume on any UI movement/keypress
+['mousemove','mousedown','touchstart','pointerdown','wheel','keydown'].forEach(evt=>{
+  document.addEventListener(evt, ()=>{ if(paused) setPaused(false); }, { passive: true });
+});
 
 // Settings drawer behavior
 if(settingsBtn && settingsDrawer){
