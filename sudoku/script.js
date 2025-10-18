@@ -8,6 +8,7 @@ const notesToggleBtn = document.getElementById('notesToggle');
 const autoCheckEl = document.getElementById('autoCheck');
 const hintBtn = document.getElementById('hintBtn');
 const timerEl = document.getElementById('timer');
+const sfxToggleBtn = document.getElementById('sfxToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsDrawer = document.getElementById('settingsDrawer');
 const closeSettingsBtn = document.getElementById('closeSettings');
@@ -25,6 +26,7 @@ let autoCheck = false;
 let timerId = null;
 let startTime = 0; // epoch ms
 let elapsedMs = 0; // accumulated when paused
+let sfxEnabled = true;
 let prefSameNumber = false;
 let prefRowColBox = true;
 let prefSmartNotes = false;
@@ -306,10 +308,12 @@ function onCheck(){
     if(anyWrong){ message.textContent = 'Some numbers don\'t match the solution.'; return; }
   }
   if(!isComplete()){ message.textContent = 'Looks good so far. Not complete yet.'; return; }
-  message.textContent = 'Great job! Puzzle solved!';
+  pulseMessage('Great job! Puzzle solved!');
   stopTimer(true);
   updateBestTime();
   clearSavedState();
+  winTone();
+  launchConfetti();
 }
 
 function onNewGame(){
@@ -423,8 +427,8 @@ function restoreState(){
   const hasRowColBox = st.prefRowColBox !== undefined ? !!st.prefRowColBox : true; prefRowColBox = hasRowColBox; if(prefRowColBoxEl) prefRowColBoxEl.checked = prefRowColBox;
   prefSmartNotes = !!st.prefSmartNotes; if(prefSmartNotesEl) prefSmartNotesEl.checked = prefSmartNotes;
     elapsedMs = Number(st.elapsedMs||0);
-    startTimer(false);
-    message.textContent = 'Restored previous game.';
+  startTimer(false);
+  pulseMessage('Restored previous game.');
     return true;
   }catch{}
   return false;
@@ -601,7 +605,7 @@ hintBtn.addEventListener('click', ()=>{
     renderNotes(target);
     if(prefSmartNotes) pruneNotesAround(target, val);
     if(autoCheck) checkConflicts();
-    message.textContent = 'Hint used.';
+    pulseMessage('Hint used.');
     saveState();
   }
 });
@@ -613,4 +617,109 @@ function readBoardToArr(){
     arr[i] = t && /^[1-9]$/.test(t) ? t : '.';
   }
   return arr;
+}
+
+// --- Celebration: Lightweight confetti ---
+function launchConfetti(durationMs = 1600, particleCount = 180){
+  if(document.getElementById('confetti-canvas')) return;
+  const c = document.createElement('canvas');
+  c.id = 'confetti-canvas';
+  c.style.position = 'fixed';
+  c.style.inset = '0';
+  c.style.pointerEvents = 'none';
+  c.style.zIndex = '9999';
+  document.body.appendChild(c);
+  const ctx = c.getContext('2d');
+  const resize = ()=>{ c.width = window.innerWidth; c.height = window.innerHeight; };
+  resize();
+  const onResize = ()=> resize();
+  window.addEventListener('resize', onResize);
+  const colors = ['#60a5fa','#f59e0b','#22c55e','#ef4444','#a78bfa','#f472b6'];
+  const parts = [];
+  for(let i=0;i<particleCount;i++){
+    const angle = Math.random()*Math.PI - Math.PI/2;
+    const speed = 6 + Math.random()*6;
+    parts.push({
+      x: c.width/2 + (Math.random()*120 - 60),
+      y: c.height/4,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed - 2,
+      g: 0.15 + Math.random()*0.2,
+      w: 6 + Math.random()*6,
+      h: 2 + Math.random()*3,
+      rot: Math.random()*Math.PI,
+      vr: (Math.random()-0.5)*0.2,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      alpha: 1
+    });
+  }
+  const start = performance.now();
+  function frame(t){
+    const dt = 16/1000; // approx
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of parts){
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.alpha = Math.max(0, 1 - (t-start)/durationMs);
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    }
+    if(t - start < durationMs){
+      requestAnimationFrame(frame);
+    } else {
+      window.removeEventListener('resize', onResize);
+      c.remove();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+// --- SFX & message pop helpers ---
+const winTone = (()=>{
+  // Simple WebAudio triad for win
+  let ctx; let playing = false;
+  return ()=>{
+    if(!sfxEnabled) return;
+    if(playing) return;
+    playing = true;
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const freqs = [523.25, 659.25, 783.99]; // C5 E5 G5
+    freqs.forEach((f, i)=>{
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.14, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.35 + i*0.03);
+      o.connect(g).connect(ctx.destination);
+      o.start(now + i*0.01);
+      o.stop(now + 0.5 + i*0.03);
+    });
+    setTimeout(()=> playing=false, 600);
+  };
+})();
+
+function pulseMessage(text){
+  message.textContent = text;
+  message.classList.remove('pop');
+  // Force reflow to restart animation
+  void message.offsetWidth;
+  message.classList.add('pop');
+}
+
+// SFX toggle
+if(sfxToggleBtn){
+  sfxToggleBtn.addEventListener('click', ()=>{
+    sfxEnabled = !sfxEnabled;
+    sfxToggleBtn.setAttribute('aria-pressed', String(sfxEnabled));
+    sfxToggleBtn.textContent = sfxEnabled ? '🔊' : '🔇';
+  });
 }

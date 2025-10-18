@@ -22,6 +22,7 @@ const message = document.getElementById('message');
 const winsEl = document.getElementById('wins');
 const lossesEl = document.getElementById('losses');
 const difficultyEl = document.getElementById('difficulty');
+const sfxToggleBtn = document.getElementById('sfxToggle');
 
 let ballCupEl = null; // the actual cup DOM element with the ball
 let canGuess = false;
@@ -29,6 +30,7 @@ let running = false;
 let wins = 0;
 let losses = 0;
 let lockingReveal = false; // prevents ball repositioning during reveal
+let sfxEnabled = true;
 
 function randInt(min, max){
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -43,7 +45,7 @@ function placeBallAtCup(cupEl){
 }
 
 function setMessage(text, kind = 'info'){
-  message.textContent = text;
+  pulseMessage(text);
   message.style.color = kind === 'win' ? 'var(--accent)' : kind === 'lose' ? 'var(--danger)' : 'var(--muted)';
 }
 
@@ -190,11 +192,15 @@ async function revealByElement(guessedCup){
     winsEl.textContent = `Wins: ${wins}`;
     setMessage('Correct! You found the ball!', 'win');
     actualCup.classList.add('correct');
+    winTone();
+    launchConfetti(1400, 160);
   } else {
     losses++;
     lossesEl.textContent = `Losses: ${losses}`;
     setMessage(`Miss! The ball was under Cup ${actualIdx+1}.`, 'lose');
     actualCup.classList.add('correct');
+    missTone();
+    launchConfetti(900, 80);
   }
 
   running = false;
@@ -256,3 +262,124 @@ againBtn.addEventListener('click', () => {
   resetForNext();
   start();
 });
+
+// --- Celebration: Lightweight confetti ---
+function launchConfetti(durationMs = 1200, particleCount = 140){
+  if(document.getElementById('confetti-canvas')) return;
+  const c = document.createElement('canvas');
+  c.id = 'confetti-canvas';
+  c.style.position = 'fixed';
+  c.style.inset = '0';
+  c.style.pointerEvents = 'none';
+  c.style.zIndex = '9999';
+  document.body.appendChild(c);
+  const ctx = c.getContext('2d');
+  const resize = ()=>{ c.width = window.innerWidth; c.height = window.innerHeight; };
+  resize();
+  const onResize = ()=> resize();
+  window.addEventListener('resize', onResize);
+  const colors = ['#60a5fa','#f59e0b','#22c55e','#ef4444','#a78bfa','#f472b6'];
+  const parts = [];
+  for(let i=0;i<particleCount;i++){
+    const angle = Math.random()*Math.PI - Math.PI/2;
+    const speed = 6 + Math.random()*6;
+    parts.push({
+      x: c.width/2 + (Math.random()*120 - 60),
+      y: c.height/4,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed - 2,
+      g: 0.15 + Math.random()*0.2,
+      w: 6 + Math.random()*6,
+      h: 2 + Math.random()*3,
+      rot: Math.random()*Math.PI,
+      vr: (Math.random()-0.5)*0.2,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      alpha: 1
+    });
+  }
+  const start = performance.now();
+  function frame(t){
+    const dt = 16/1000; // approx
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of parts){
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.alpha = Math.max(0, 1 - (t-start)/durationMs);
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    }
+    if(t - start < durationMs){
+      requestAnimationFrame(frame);
+    } else {
+      window.removeEventListener('resize', onResize);
+      c.remove();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+// --- SFX & message pop helpers ---
+function pulseMessage(text){
+  message.textContent = text;
+  message.classList.remove('pop');
+  // Force reflow to restart animation
+  void message.offsetWidth;
+  message.classList.add('pop');
+}
+
+const winTone = (()=>{
+  let ctx; let playing=false;
+  return ()=>{
+    if(!sfxEnabled || playing) return;
+    playing = true;
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const freqs=[587.33, 739.99, 880.00]; // D5 F#5 A5
+    freqs.forEach((f,i)=>{
+      const o=ctx.createOscillator();
+      const g=ctx.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.16, now+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+0.32+i*0.03);
+      o.connect(g).connect(ctx.destination);
+      o.start(now+i*0.01);
+      o.stop(now+0.5+i*0.03);
+    });
+    setTimeout(()=> playing=false, 600);
+  };
+})();
+
+const missTone = (()=>{
+  let ctx; let playing=false;
+  return ()=>{
+    if(!sfxEnabled || playing) return;
+    playing=true;
+    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const o=ctx.createOscillator();
+    const g=ctx.createGain();
+    o.type='sine'; o.frequency.value=220; // A3
+    g.gain.setValueAtTime(0.12, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+0.25);
+    o.connect(g).connect(ctx.destination);
+    o.start(now);
+    o.stop(now+0.3);
+    setTimeout(()=> playing=false, 350);
+  };
+})();
+
+if(sfxToggleBtn){
+  sfxToggleBtn.addEventListener('click', ()=>{
+    sfxEnabled = !sfxEnabled;
+    sfxToggleBtn.setAttribute('aria-pressed', String(sfxEnabled));
+    sfxToggleBtn.textContent = sfxEnabled ? '🔊' : '🔇';
+  });
+}
