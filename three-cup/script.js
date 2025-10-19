@@ -334,25 +334,38 @@ function pulseMessage(text){
 }
 
 const winTone = (()=>{
+  // Ta‑ta: two short ascending chord stabs
   let ctx; let playing=false;
   return ()=>{
     if(!sfxEnabled || playing) return;
     playing = true;
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
     const now = ctx.currentTime;
-    const freqs=[587.33, 739.99, 880.00]; // D5 F#5 A5
-    freqs.forEach((f,i)=>{
-      const o=ctx.createOscillator();
-      const g=ctx.createGain();
-      o.type='sine'; o.frequency.value=f;
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.exponentialRampToValueAtTime(0.16, now+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, now+0.32+i*0.03);
-      o.connect(g).connect(ctx.destination);
-      o.start(now+i*0.01);
-      o.stop(now+0.5+i*0.03);
-    });
-    setTimeout(()=> playing=false, 600);
+    const stab1 = [440.00, 554.37, 659.25];   // A4 C#5 E5 (A major)
+    const stab2 = [523.25, 659.25, 783.99];   // C5 E5 G5 (C major)
+
+    function playStab(freqs, tStart, dur=0.22){
+      freqs.forEach((f,i)=>{
+        const o=ctx.createOscillator();
+        const g=ctx.createGain();
+        o.type='triangle';
+        o.frequency.value=f;
+        o.detune.value = (i-1) * 5; // slight spread
+        g.gain.setValueAtTime(0.0001, tStart);
+        g.gain.exponentialRampToValueAtTime(0.22, tStart+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, tStart+dur);
+        o.connect(g).connect(ctx.destination);
+        o.start(tStart + i*0.004);
+        o.stop(tStart + dur + 0.04 + i*0.004);
+      });
+    }
+
+    const t1 = now;
+    const t2 = t1 + 0.24; // second hit slightly later
+    playStab(stab1, t1);
+    playStab(stab2, t2);
+
+    setTimeout(()=> playing=false, 650);
   };
 })();
 
