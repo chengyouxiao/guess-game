@@ -821,3 +821,9 @@ if(sfxToggleBtn){
     sfxToggleBtn.textContent = sfxEnabled ? '🔊' : '🔇';
   });
 }
+
+// Auto-pause when page/tab is hidden
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ setPaused(true); }
+});
+window.addEventListener('pagehide', ()=>{ setPaused(true); });
