@@ -2,7 +2,7 @@ name: Build and Deploy (Docker) to Azure App Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main-save" ]
   workflow_dispatch:
 
 permissions:
