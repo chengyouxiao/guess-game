@@ -1,0 +1,17 @@
+{
+  "name": "guess-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static games (Three-Cup, Sudoku) with simple Node server for Azure App Service (Linux)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "start:dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
