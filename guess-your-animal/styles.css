@@ -1,0 +1,22 @@
+:root{
+  --bg:#0f172a; --panel:#111827; --card:#111827; --text:#e5e7eb; --muted:#a1a1aa; --accent:#f59e0b; --good:#22c55e; --bad:#ef4444;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background: radial-gradient(1200px 600px at 50% -300px, #111 0%, var(--bg) 60%); color:var(--text); font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans; display:grid; place-items:center}
+.container{width:min(960px,94vw); padding:24px}
+header{background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0)); border:1px solid #ffffff18; border-radius:12px; padding:16px; margin-bottom:16px}
+.controls{display:flex; gap:12px; align-items:center}
+.controls select,.controls button{background:#1f2937; border:1px solid #ffffff22; color:var(--text); padding:8px 10px; border-radius:8px; cursor:pointer}
+.controls button:hover{border-color:#ffffff44}
+.prompt{margin-top:8px; color:var(--accent); font-weight:600}
+.board{display:grid; grid-template-columns: repeat(4, minmax(120px,1fr)); grid-auto-rows: 120px; gap:12px}
+.card{position:relative; perspective:800px}
+.card-inner{position:absolute; inset:0; transition: transform .5s; transform-style: preserve-3d}
+.card.flipped .card-inner{transform: rotateY(180deg)}
+.face{position:absolute; inset:0; display:grid; place-items:center; border-radius:12px; border:1px solid #ffffff18; background:var(--card); backface-visibility:hidden; font-size:38px}
+.back.face{transform: rotateY(180deg); font-size:14px; color:var(--muted)}
+.face span{font-size:28px}
+.status{margin-top:12px}
+.footer{margin-top:16px}
+.confetti{position:fixed; top:0; left:0; width:100%; height:0; pointer-events:none}

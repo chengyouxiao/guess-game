@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guess Your Animal</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='20' fill='%23ffcc00'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Guess Your Animal</h1>
+  <p>Memorize the 12 Chinese zodiac animals. You'll have <span id="memorizeSeconds">20</span> seconds, then find the requested animal.</p>
+      <div class="controls">
+        <label for="level">Level:</label>
+        <select id="level">
+          <option value="20">Easy (20s)</option>
+          <option value="10">Medium (10s)</option>
+          <option value="5">Hard (5s)</option>
+        </select>
+        <button id="restartBtn">Restart</button>
+      </div>
+      <div id="prompt" class="prompt">Get ready…</div>
+    </header>
+
+    <section class="board" id="board" aria-label="4 by 3 grid of animal cards"></section>
+
+    <footer class="footer">
+      <a href="../index.html">← Back to games</a>
+    </footer>
+  </main>
+
+  <audio id="tada" preload="auto">
+    <source src="https://cdn.jsdelivr.net/gh/naptha/tinysound@master/demo/sfx/ta-da.ogg" type="audio/ogg">
+    <source src="https://cdn.jsdelivr.net/gh/naptha/tinysound@master/demo/sfx/ta-da.mp3" type="audio/mpeg">
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
